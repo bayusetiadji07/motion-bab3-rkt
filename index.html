@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motion Bab III RKT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1E40AF; --blue2:#3B5BDB; --sky:#E8EEFF; --navy:#0B1B4D; --yellow:#FACC15; --ink:#0F172A;
+  --green:#16A34A; --greenbg:#DCFCE7; --amber:#D97706; --amberbg:#FEF3C7; --redc:#DC2626; --redbg:#FEE2E2;
+  --red:var(--blue); --ochre:var(--amber); --paper:#FFFFFF; --inkc:var(--navy);
+  --sans:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif; --serif:var(--sans);
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 12px 32px -8px rgba(30,64,175,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b1230;overflow:hidden}
+body{font-family:var(--sans)}
+#stage{width:1920px;height:1080px;position:absolute;left:50%;top:50%;overflow:hidden;transform-origin:center;
+  --bg:#F5F7FC;--fg:var(--ink);--sub:#64748B;--rule:#E2E8F0;--card:#FFFFFF;
+  background:var(--bg);color:var(--fg);transition:background .5s,color .5s}
+#stage:before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(900px 600px at 100% 0%,rgba(59,91,219,.10),transparent 60%),radial-gradient(700px 500px at 0% 100%,rgba(250,204,21,.12),transparent 60%)}
+#stage[data-theme=ink]{--bg:var(--navy);--fg:#fff;--sub:#A5B4FC;--rule:rgba(255,255,255,.14);--card:rgba(255,255,255,.07)}
+#stage[data-theme=ink]:before{background:radial-gradient(900px 600px at 100% 0%,rgba(59,91,219,.45),transparent 60%),radial-gradient(700px 500px at 0% 100%,rgba(250,204,21,.10),transparent 60%)}
+.grain{display:none}
+
+/* bingkai tetap */
+.chrome{position:absolute;inset:0;pointer-events:none;z-index:20;font-size:18px;font-weight:700}
+.chrome .tl,.chrome .tr,.chrome .bl,.chrome .br{position:absolute;display:flex;gap:12px;align-items:center}
+.chrome .tl{left:72px;top:44px}.chrome .tr{right:72px;top:44px}.chrome .bl{left:72px;bottom:38px}.chrome .br{right:72px;bottom:38px}
+.chrome .sq{width:34px;height:34px;border-radius:10px;background:var(--blue);box-shadow:inset 0 -10px 0 var(--yellow)}
+.chrome .mutec{color:var(--sub);font-weight:600}
+.chrome .tr span:last-child,.chrome .bl span,.chrome .br span{padding:8px 16px;border-radius:999px;background:var(--card);box-shadow:var(--shadow);font-size:16px}
+#stage[data-theme=ink] .chrome .tr span:last-child,#stage[data-theme=ink] .chrome .bl span,#stage[data-theme=ink] .chrome .br span{box-shadow:none;border:1px solid var(--rule)}
+.chrome .tr span:last-child{background:var(--blue);color:#fff}
+.chrome .rt,.chrome .rb{display:none}
+#pbar{position:absolute;left:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--blue),var(--yellow));width:0;z-index:21;border-radius:0 6px 6px 0}
+
+/* transisi */
+#wipe{position:absolute;inset:0;z-index:25;pointer-events:none;background:var(--blue);clip-path:circle(0% at 50% 50%)}
+#wipe.run{animation:wipe .9s cubic-bezier(.7,0,.3,1)}
+@keyframes wipe{0%{clip-path:circle(0% at 100% 100%)}45%,55%{clip-path:circle(150% at 100% 100%)}100%{clip-path:circle(0% at 0% 0%);}}
+
+/* adegan & animasi */
+.scene{position:absolute;inset:0;padding:140px 120px 120px;display:none}
+.scene.on{display:block}
+.a{opacity:0}
+.scene.on .a{animation:var(--an,up) .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0s)}
+.up{--an:up}.fade{--an:fade}.left{--an:left}.pop{--an:pop}
+@keyframes up{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+@keyframes left{from{opacity:0;transform:translateX(-44px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{opacity:0;transform:scale(.7)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:none}}
+.rv{display:block;overflow:hidden;padding-bottom:.1em}
+.rv>.i{display:block;transform:translateY(110%)}
+.scene.on .rv>.i{animation:rise 1s cubic-bezier(.2,.85,.2,1) both;animation-delay:var(--d,0s)}
+@keyframes rise{to{transform:none}}
+.rule{height:4px;width:120px;border-radius:4px;background:var(--yellow);transform:scaleX(0);transform-origin:left}
+.scene.on .rule{animation:sx .9s cubic-bezier(.6,0,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes sx{to{transform:scaleX(1)}}
+
+.kick{display:inline-flex;align-items:center;gap:10px;font-size:18px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--blue);background:var(--sky);padding:10px 18px;border-radius:999px}
+.kick:before{content:"";width:10px;height:10px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 3px rgba(250,204,21,.3)}
+#stage[data-theme=ink] .kick{background:rgba(255,255,255,.1);color:#fff}
+.disp{font-family:var(--sans);font-weight:800;letter-spacing:-.035em;line-height:1.02}
+.disp em{font-style:normal;color:var(--blue);background:linear-gradient(transparent 68%,rgba(250,204,21,.55) 68%);padding:0 .05em}
+#stage[data-theme=ink] .disp em{color:var(--yellow);background:none}
+
+/* foto */
+.ph{position:relative;overflow:hidden;background:var(--navy);border-radius:28px;box-shadow:var(--shadow)}
+.ph .art{position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,var(--yellow) 0 12%,transparent 12.3%),linear-gradient(135deg,var(--blue),var(--navy))}
+.ph .art svg{position:absolute;left:12%;bottom:14%;width:22%;max-width:150px;color:#fff;opacity:.9}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scene.on .ph img{animation:kb 14s ease-out both}
+@keyframes kb{from{transform:scale(1.12)}to{transform:scale(1)}}
+.ph:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(11,27,77,.7))}
+.reveal{clip-path:inset(100% 0 0 0 round 28px)}
+.scene.on .reveal{animation:unclip 1.2s cubic-bezier(.7,0,.2,1) both;animation-delay:var(--d,0s)}
+@keyframes unclip{to{clip-path:inset(0 0 0 0 round 28px)}}
+
+/* 1 sampul */
+.cover .txt{position:absolute;left:120px;top:200px;width:1020px}
+.cover .bab{display:inline-flex;align-items:center;gap:14px;font-size:26px;font-weight:800;color:var(--navy);background:var(--yellow);padding:12px 26px;border-radius:999px;margin-bottom:34px}
+.cover .bab span{color:var(--blue)}
+.cover h1{font-size:122px}
+.cover h1 em{display:inline-block}
+.cover .meta{position:absolute;left:120px;bottom:140px;width:900px}
+.cover .meta .row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding-top:28px}
+.cover .meta .row>div{background:var(--card);border-radius:20px;padding:20px 24px;box-shadow:var(--shadow)}
+.cover .meta small{display:block;font-size:14px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);font-weight:700;margin-bottom:6px}
+.cover .meta span{font-size:24px;font-weight:700}
+.cover .ph{position:absolute;right:90px;top:120px;bottom:110px;width:640px}
+.cover .ph:before{content:"";position:absolute;left:-30px;bottom:60px;width:120px;height:120px;border-radius:28px;background:var(--yellow);z-index:-1}
+
+/* 2 pertanyaan */
+.hook{display:grid;grid-template-columns:1.3fr 1fr;gap:100px;align-items:center;height:100%}
+.hook .disp{font-size:126px}
+.hook .rule{margin:6px 0}
+.stmt{display:flex;gap:26px;align-items:center;padding:34px 36px;background:var(--card);border-radius:28px;box-shadow:var(--shadow);margin:18px 0}
+.stmt .n{flex:none;width:72px;height:72px;border-radius:22px;display:grid;place-items:center;font-size:36px;font-weight:800}
+.stmt.x .n{background:var(--redbg);color:var(--redc)}
+.stmt.o .n{background:var(--greenbg);color:var(--green)}
+.stmt p{font-size:40px;line-height:1.2;font-weight:600;letter-spacing:-.01em}
+.stmt p b{font-weight:800}
+.stmt.x p b{color:var(--redc)}
+.stmt.o p b{color:var(--green)}
+
+/* 3 potret */
+.ttl{font-size:76px;margin-top:22px}
+.ledger{display:grid;grid-template-columns:1fr 1.5fr;gap:40px;margin-top:44px}
+.ledger>div{background:var(--card);border-radius:28px;padding:30px 36px;box-shadow:var(--shadow)}
+.ledger .rule{display:none}
+.lg-h{display:flex;align-items:center;gap:20px;padding-bottom:14px}
+.lg-h .cnt{font-size:64px;font-weight:800;line-height:1;width:96px;height:96px;border-radius:26px;display:grid;place-items:center}
+.lg-h .lb{font-size:28px;font-weight:800}
+.g .cnt{background:var(--greenbg);color:var(--green)} .g .lb{color:var(--green)}
+.w .cnt{background:var(--amberbg);color:var(--amber)} .w .lb{color:var(--amber)}
+.it{display:flex;gap:16px;align-items:center;font-size:26px;font-weight:600;padding:12px 0;border-top:1px solid var(--rule)}
+.it i{font-style:normal;flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:0}
+.g .it i{background:var(--greenbg)} .g .it i:after{content:"✓";font-size:18px;color:var(--green);font-weight:800}
+.w .it i{background:var(--amberbg)} .w .it i:after{content:"!";font-size:18px;color:var(--amber);font-weight:800}
+.w .items{columns:2;column-gap:40px}
+.w .it{break-inside:avoid}
+
+/* 4 angka */
+.bars{margin-top:36px;background:var(--card);border-radius:28px;padding:10px 40px;box-shadow:var(--shadow)}
+.br-row{display:grid;grid-template-columns:400px 1fr 210px 200px;align-items:center;gap:36px;padding:18px 0;border-bottom:1px solid var(--rule)}
+.br-row:last-child{border-bottom:0}
+.br-row .lbl{font-size:28px;font-weight:700}
+.track{position:relative;height:22px;background:#EEF2F9;border-radius:999px;overflow:hidden}
+.track .ticks{display:none}
+.track .fill{position:absolute;left:0;top:0;bottom:0;width:var(--w);background:var(--c);border-radius:999px;transform:scaleX(0);transform-origin:left}
+.scene.on .track .fill{animation:sx 1.8s cubic-bezier(.3,.8,.2,1) forwards;animation-delay:var(--d)}
+.br-row .val{font-size:56px;font-weight:800;text-align:right;letter-spacing:-.03em;color:var(--c)}
+.st{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.st span{font-size:15px;font-weight:800;padding:6px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em}
+.st .k{background:color-mix(in srgb,var(--c) 15%,white);color:var(--c)}
+.st .dn{background:var(--redbg);color:var(--redc)}
+
+/* 5 refleksi */
+.insight .disp{font-size:150px}
+.insight .disp b{color:var(--yellow);font-weight:800}
+.trend{position:absolute;left:120px;right:120px;bottom:130px;height:300px}
+.trend svg{width:100%;height:100%;overflow:visible}
+.trend .ln{fill:none;stroke:var(--yellow);stroke-width:6;stroke-linecap:round;stroke-dasharray:2200;stroke-dashoffset:2200}
+.scene.on .trend .ln{animation:draw 2.6s 1s cubic-bezier(.5,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.tnote{position:absolute;padding:18px 24px;border-radius:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(6px)}
+.tnote b{display:block;font-size:34px;font-weight:800;color:#fff;margin-top:4px}
+.tnote span{color:#FCA5A5;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:15px}
+
+/* 6 posisi */
+.chap{display:grid;grid-template-columns:repeat(6,1fr);gap:20px;margin-top:50px;height:400px}
+.chap>div{position:relative;padding:30px 26px;border-radius:28px;background:var(--card);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.chap .rn{font-size:84px;font-weight:800;line-height:1;color:#CBD5E1;position:relative;z-index:1}
+.chap .nm{font-size:25px;font-weight:700;line-height:1.25;position:relative;z-index:1}
+.chap .me:before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,var(--blue2),var(--blue));transform:scaleY(0);transform-origin:bottom}
+.scene.on .chap .me:before{animation:sy .9s 2.6s cubic-bezier(.7,0,.2,1) forwards}
+@keyframes sy{to{transform:scaleY(1)}}
+.scene.on .chap .me .rn,.scene.on .chap .me .nm{animation:toWhite .4s 3.1s forwards}
+@keyframes toWhite{to{color:#fff}}
+.scene.on .chap .me .rn{animation-name:toYellow}
+@keyframes toYellow{to{color:var(--yellow)}}
+.chap .me .tag{position:absolute;top:24px;right:20px;z-index:1;font-size:13px;font-weight:800;text-transform:uppercase;color:var(--navy);background:var(--yellow);padding:6px 12px;border-radius:999px;opacity:0}
+.scene.on .chap .me .tag{animation:fade .5s 3.3s forwards}
+.scene.on .chap .me{animation:pop .9s 1.2s both,lift .6s 2.6s forwards}
+@keyframes lift{to{transform:translateY(-16px)}}
+.chap .dim{opacity:.55}
+.posnote{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:36px}
+.posnote p{font-size:27px;line-height:1.45;background:var(--card);border-radius:24px;padding:24px 30px;box-shadow:var(--shadow)}
+.posnote b{color:var(--blue);font-weight:800}
+
+/* 7 peta */
+.map{margin-top:22px;background:var(--card);border-radius:28px;padding:8px 36px;box-shadow:var(--shadow)}
+.map-h,.mrow{display:grid;grid-template-columns:60px 560px 290px 1fr;gap:26px;align-items:center}
+.map-h{font-size:14px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--sub);padding:10px 0 12px;border-bottom:2px solid var(--rule)}
+.mrow{padding:6px 0;border-bottom:1px solid var(--rule)}
+.mrow:last-child{border-bottom:0}
+.mrow .no{font-size:18px;font-weight:800;color:var(--blue);width:40px;height:40px;border-radius:12px;background:var(--sky);display:grid;place-items:center}
+.mrow .ms{font-size:23px;font-weight:700}
+.mrow .ms small{display:block;font-size:17px;font-weight:500;color:var(--sub);margin-top:2px}
+.lvl{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:800;text-transform:uppercase}
+.lvl i{width:12px;height:12px;border-radius:50%;background:#E2E8F0}
+.lvl i.f{background:var(--blue)}
+.lvl span{margin-left:10px;padding:5px 12px;border-radius:999px;background:var(--sky);color:var(--blue)}
+.mrow .pg{font-size:25px;font-weight:800;display:flex;align-items:center;gap:16px;color:var(--navy)}
+.mrow .pg:before{content:"→";flex:none;width:40px;height:40px;border-radius:50%;background:var(--yellow);color:var(--navy);display:grid;place-items:center;font-size:22px}
+
+/* 8 ikhtisar */
+.eight{display:grid;grid-template-columns:repeat(4,1fr);gap:26px;margin-top:40px}
+.card{background:var(--card);border-radius:28px;padding:12px;box-shadow:var(--shadow)}
+.card .ph{height:200px;border-radius:20px;box-shadow:none}
+.card .ph .art svg{left:9%;bottom:14%;width:22%}
+.card .meta{display:flex;gap:16px;align-items:center;padding:16px 10px 8px}
+.card .no{flex:none;width:52px;height:52px;border-radius:16px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:800}
+.card h4{font-size:22px;font-weight:800;line-height:1.2}
+
+/* program */
+.pgs{display:grid;grid-template-columns:580px 1fr;gap:80px;height:100%}
+.pgs .ph{height:100%}
+.pgs .big{position:absolute;left:28px;bottom:24px;z-index:2;width:120px;height:120px;border-radius:32px;background:var(--yellow);color:var(--navy);display:grid;place-items:center;font-size:56px;font-weight:800}
+.pgs .cnt{position:absolute;top:24px;left:24px;z-index:2;color:#fff;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;background:rgba(11,27,77,.55);backdrop-filter:blur(6px);padding:8px 14px;border-radius:999px}
+.pr{display:flex;flex-direction:column;min-width:0}
+.pr h2{font-size:64px;margin-top:18px}
+.pr .sb{font-size:28px;font-weight:700;color:var(--blue);margin-top:6px}
+.pr .tj{font-size:24px;line-height:1.5;margin-top:14px;color:#334155;max-width:1000px}
+.ans{margin-top:18px;padding:16px 22px;border-radius:20px;background:var(--amberbg);font-size:21px;line-height:1.4;font-weight:600;color:#78350F}
+.ans small{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--amber);margin-bottom:4px}
+.keg-h{font-size:14px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--sub);margin-top:24px;margin-bottom:12px}
+.keg{list-style:none;display:grid;grid-template-columns:1fr;gap:10px 14px}
+.keg.two{grid-template-columns:1fr 1fr}
+.keg li{display:flex;gap:14px;align-items:center;font-size:21px;font-weight:600;line-height:1.3;padding:12px 16px;border-radius:16px;background:var(--card);box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 14px -6px rgba(30,64,175,.15)}
+.keg li i{flex:none;font-style:normal;width:36px;height:36px;border-radius:11px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:16px;font-weight:800}
+.pmeta{display:grid;grid-template-columns:1fr 1fr 2fr;gap:14px;margin-top:auto;padding-top:16px}
+.pmeta>div{padding:16px 20px;border-radius:18px;background:var(--sky)}
+.pmeta .ind{background:var(--navy);color:#fff}
+.pmeta small{display:block;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--blue);margin-bottom:6px}
+.pmeta .ind small{color:var(--yellow)}
+.pmeta span{font-size:21px;font-weight:700;line-height:1.3}
+
+/* ritme */
+.cal{margin-top:34px;background:var(--card);border-radius:28px;padding:18px 36px;box-shadow:var(--shadow)}
+.cal-h,.cal-r{display:grid;grid-template-columns:440px repeat(12,1fr);align-items:center}
+.cal-h div{font-size:15px;font-weight:800;color:var(--sub);text-transform:uppercase;padding-bottom:12px;border-bottom:2px solid var(--rule);text-align:center}
+.cal-h div:first-child{text-align:left}
+.cal-h .yr{color:var(--blue)}
+.cal-r{border-bottom:1px solid var(--rule);height:72px}
+.cal-r:last-child{border-bottom:0}
+.cal-r .nm{font-size:21px;font-weight:700;line-height:1.2}
+.cal-r .nm small{display:inline-block;margin-top:4px;font-size:14px;font-weight:700;color:var(--blue);background:var(--sky);padding:3px 10px;border-radius:999px}
+.lane{grid-column:2/14;position:relative;height:100%;clip-path:inset(0 100% 0 0)}
+.scene.on .lane{animation:unclipx 2s cubic-bezier(.6,0,.2,1) forwards;animation-delay:var(--d)}
+@keyframes unclipx{to{clip-path:inset(0 0 0 0)}}
+.lane .gridm{position:absolute;inset:0;background:repeating-linear-gradient(90deg,var(--rule) 0 1px,transparent 1px calc(100%/12))}
+.dotsw{position:absolute;left:0;right:0;top:50%;height:12px;transform:translateY(-50%);background:radial-gradient(circle,var(--blue) 0 4.5px,transparent 5px) 0 0/calc(100%/52) 12px repeat-x}
+.barf{position:absolute;top:50%;height:16px;border-radius:999px;transform:translateY(-50%);background:var(--blue)}
+.barr{position:absolute;top:50%;height:16px;border-radius:999px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,var(--green) 0 22px,#86EFAC 22px 30px)}
+.mk{position:absolute;top:50%;width:22px;height:22px;border-radius:50%;background:var(--yellow);border:4px solid var(--navy);transform:translate(-50%,-50%)}
+.mk2{position:absolute;top:50%;width:4px;height:24px;border-radius:4px;background:var(--blue2);transform:translate(-50%,-50%)}
+.step{position:absolute;bottom:16px;background:var(--amber);border-radius:6px 6px 0 0}
+
+/* penutup */
+.end .ph{position:absolute;inset:0;border-radius:0;box-shadow:none}
+.end .ph:after{background:linear-gradient(90deg,rgba(11,27,77,.96) 0%,rgba(11,27,77,.82) 48%,rgba(11,27,77,.25))}
+.end .txt{position:relative;z-index:2;color:#fff}
+.end .disp{font-size:180px;line-height:.98}
+.end .last>.i{color:var(--yellow)}
+.end .bt{font-size:28px;line-height:1.5;max-width:900px;margin-top:40px;color:rgba(255,255,255,.85)}
+.sig{position:absolute;right:120px;bottom:130px;z-index:2;color:#fff;text-align:right;background:rgba(11,27,77,.6);backdrop-filter:blur(8px);padding:20px 28px;border-radius:22px;border:1px solid rgba(255,255,255,.15)}
+.sig small{font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--yellow);font-weight:800}
+.sig div{font-size:30px;font-weight:800;margin-top:6px}
+
+/* kontrol */
+.ctrl{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px;z-index:50;padding:6px;border-radius:14px;background:rgba(11,27,77,.92);opacity:0;transition:opacity .3s}
+body.show .ctrl{opacity:1}
+.ctrl button{font:700 13px var(--sans);color:#fff;background:rgba(255,255,255,.1);border:0;border-radius:9px;padding:9px 13px;cursor:pointer}
+.ctrl button:hover{background:rgba(255,255,255,.22)}
+.ctrl .info{color:#A5B4FC;font:500 12px var(--sans);align-self:center;padding:0 8px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="chrome">
+    <div class="tl"><span class="sq"></span><span>SMP Negeri 3 Besuki</span><span class="mutec">RKT 2026/2027</span></div>
+    <div class="tr"><span class="mutec">Program Peningkatan Mutu</span><span>Bab III</span></div>
+    <div class="rt"></div><div class="rb"></div>
+    <div class="bl"><span id="secLabel">Pembuka</span></div>
+    <div class="br"><span id="pageNo">01 / 18</span></div>
+  </div>
+  <div id="pbar"></div>
+
+  <!-- 1 sampul -->
+  <section class="scene cover" data-sec="Pembuka" data-dur="8000">
+    <div class="ph reveal" style="--d:.2s"><div class="art"></div><img src="assets/cover.jpg" alt="" onerror="if(!this.dataset.p){this.dataset.p=1;this.src=this.src.replace(/.jpg$/,'.png')}else this.remove()"></div>
+    <div class="txt">
+      <div class="bab a pop" style="--d:.3s"><span>BAB III</span> Program Peningkatan Mutu Sekolah</div>
+      <h1 class="disp" style="margin-top:22px"><span class="rv" style="--d:.9s">Rencana</span><span class="rv" style="--d:1.05s">Kerja <em>Tahunan</em></span></h1>
+    </div>
+    <div class="meta">
+      <div class="rule" style="--d:1.6s"></div>
+      <div class="row">
+        <div class="a up" style="--d:1.9s"><small>Dasar</small><span>Rapor Pendidikan 2025</span></div>
+        <div class="a up" style="--d:2.05s"><small>Satuan</small><span>SMP Negeri 3 Besuki</span></div>
+        <div class="a up" style="--d:2.2s"><small>Periode</small><span>Juli 2026 – Juni 2027</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 pertanyaan -->
+  <section class="scene" data-sec="Latar Belakang" data-dur="8500">
+    <div class="hook">
+      <div>
+        <div class="kick a fade" style="--d:.1s">Latar Belakang</div>
+        <h1 class="disp" style="margin-top:30px"><span class="rv" style="--d:.3s">Mengapa</span><span class="rv" style="--d:.45s"><em>Bab III</em></span><span class="rv" style="--d:.6s">perlu disusun?</span></h1>
+      </div>
+      <div>
+        <div class="rule" style="--d:1.4s"></div>
+        <div class="stmt x a up" style="--d:1.7s"><div class="n">✕</div><p>Data tanpa rencana <b>hanya menjadi arsip.</b></p></div>
+        <div class="rule" style="--d:2.4s"></div>
+        <div class="stmt o a up" style="--d:2.7s"><div class="n">✓</div><p>Rencana berbasis data <b>menjadi arah perbaikan.</b></p></div>
+        <div class="rule" style="--d:3.2s"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 potret -->
+  <section class="scene" data-sec="Latar Belakang" data-dur="11000">
+    <div class="kick a fade">Potret Rapor Pendidikan 2025</div>
+    <h2 class="disp ttl"><span class="rv" style="--d:.2s">Ada yang sudah kuat, ada yang <em>perlu dibenahi.</em></span></h2>
+    <div class="ledger">
+      <div class="g">
+        <div class="lg-h a up" style="--d:.9s"><span class="cnt">05</span><span class="lb">Kekuatan</span></div>
+        <div class="rule" style="--d:1s;background:var(--green);height:2px"></div>
+        <div class="items" id="itG"></div>
+      </div>
+      <div class="w">
+        <div class="lg-h a up" style="--d:2.6s"><span class="cnt">08</span><span class="lb">Perlu perhatian</span></div>
+        <div class="rule" style="--d:2.7s;background:var(--red);height:2px"></div>
+        <div class="items" id="itW"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 angka -->
+  <section class="scene" data-sec="Latar Belakang" data-dur="12000">
+    <div class="kick a fade">Angka yang berbicara</div>
+    <h2 class="disp ttl"><span class="rv" style="--d:.2s">Enam sinyal dari <em>Rapor Pendidikan</em></span></h2>
+    <div class="bars" id="bars"></div>
+  </section>
+
+  <!-- 5 refleksi -->
+  <section class="scene insight" data-theme="ink" data-sec="Hasil Refleksi" data-dur="10000">
+    <div class="kick a fade">Hasil refleksi · Bab II</div>
+    <h1 class="disp" style="margin-top:30px"><span class="rv" style="--d:.3s">Capaian baik</span><span class="rv" style="--d:.5s">belum tentu <b>aman.</b></span></h1>
+    <div class="trend">
+      <svg viewBox="0 0 1680 300" preserveAspectRatio="none">
+        <path class="ln" d="M0 30 C 300 20, 500 50, 760 110 S 1300 210, 1680 280"/>
+      </svg>
+      <div class="tnote a up" style="left:260px;top:60px;--d:1.8s"><span>▼ Menurun</span><b>Literasi 97,78%</b></div>
+      <div class="tnote a up" style="left:760px;top:150px;--d:2.4s"><span>▼ Menurun</span><b>Numerasi 95,56%</b></div>
+      <div class="tnote a up" style="left:1160px;top:-10px;--d:3s"><span>▼ Sedang &amp; menurun</span><b>Kualitas pembelajaran 60,39</b></div>
+    </div>
+  </section>
+
+  <!-- 6 posisi -->
+  <section class="scene" data-sec="Posisi Bab III" data-dur="10000">
+    <div class="kick a fade">Posisi Bab III dalam dokumen</div>
+    <h2 class="disp ttl"><span class="rv" style="--d:.2s">Jembatan dari <em>refleksi</em> menuju <em>aksi.</em></span></h2>
+    <div class="chap">
+      <div class="dim a up" style="--d:.8s"><span class="rn">I</span><span class="nm">Pendahuluan</span></div>
+      <div class="a up" style="--d:1s"><span class="rn">II</span><span class="nm">Analisis &amp; Refleksi</span></div>
+      <div class="me a up" style="--d:1.2s"><span class="tag">Kita di sini</span><span class="rn">III</span><span class="nm">Rencana Kerja Tahunan</span></div>
+      <div class="a up" style="--d:1.4s"><span class="rn">IV</span><span class="nm">Matriks Rencana Kerja</span></div>
+      <div class="a up" style="--d:1.6s"><span class="rn">V</span><span class="nm">Monitoring, Evaluasi &amp; RTL</span></div>
+      <div class="dim a up" style="--d:1.8s"><span class="rn">VI</span><span class="nm">Penutup</span></div>
+    </div>
+    <div class="posnote">
+      <p class="a up" style="--d:3.6s">Bab II menjawab <b>“apa masalahnya?”</b> — kondisi, kebutuhan, dan skala prioritas.</p>
+      <p class="a up" style="--d:4.2s">Bab III menjawab <b>“apa yang akan dilakukan?”</b> — program, kegiatan, sasaran, waktu, dan indikator keberhasilan.</p>
+    </div>
+  </section>
+
+  <!-- 7 peta -->
+  <section class="scene" data-sec="Prioritas" data-dur="12000">
+    <div class="kick a fade">Prioritas menentukan program</div>
+    <h2 class="disp ttl"><span class="rv" style="--d:.2s">Setiap masalah punya <em>jawabannya.</em></span></h2>
+    <div class="map">
+      <div class="map-h a fade" style="--d:.6s"><span>No</span><span>Aspek rapor</span><span>Prioritas</span><span>Dijawab oleh program</span></div>
+      <div id="map"></div>
+    </div>
+  </section>
+
+  <!-- 8 ikhtisar -->
+  <section class="scene" data-sec="Rencana Kerja Tahunan" data-dur="10000">
+    <div class="kick a fade">Rencana Kerja Tahunan 2026/2027</div>
+    <h2 class="disp ttl"><span class="rv" style="--d:.2s"><em>Delapan</em> program utama</span></h2>
+    <div class="eight" id="eight"></div>
+  </section>
+
+  <div id="progSlot"></div>
+
+  <!-- ritme -->
+  <section class="scene" data-sec="Ritme Pelaksanaan" data-dur="12000">
+    <div class="kick a fade">Ritme pelaksanaan</div>
+    <h2 class="disp ttl"><span class="rv" style="--d:.2s">Satu tahun, <em>delapan</em> program bergerak.</span></h2>
+    <div class="cal">
+      <div class="cal-h a fade" style="--d:.6s"><div>Program</div><div class="yr">Jul</div><div>Agu</div><div>Sep</div><div>Okt</div><div>Nov</div><div>Des</div><div class="yr">Jan</div><div>Feb</div><div>Mar</div><div>Apr</div><div>Mei</div><div>Jun</div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:.9s">Gemar Literasi · Numerasi<small>mingguan</small></div><div class="lane" style="--d:1s"><div class="gridm"></div><div class="dotsw"></div></div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:1.2s">Kombel · Siswa Disiplin, Kreatif &amp; Aktif<small>sepanjang tahun</small></div><div class="lane" style="--d:1.3s"><div class="gridm"></div><div class="barf" style="left:0;right:0"></div></div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:1.5s">Sekolah Sehat, Aman &amp; Nyaman<small>rutin</small></div><div class="lane" style="--d:1.6s"><div class="gridm"></div><div class="barr" style="left:0;right:0"></div></div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:1.8s">Sekolah Bersama Orang Tua<small>minimal tiap semester</small></div><div class="lane" style="--d:1.9s"><div class="gridm"></div><div class="mk" style="left:25%"></div><div class="mk" style="left:75%"></div></div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:2.1s">Sarana Belajar Layak &amp; Aman<small>bertahap</small></div><div class="lane" style="--d:2.2s"><div class="gridm"></div><div class="step" style="left:1%;width:23%;height:10px"></div><div class="step" style="left:26%;width:23%;height:18px"></div><div class="step" style="left:51%;width:23%;height:26px"></div><div class="step" style="left:76%;width:23%;height:34px"></div></div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:2.4s">Anggaran Prioritas Mutu<small>tahunan · sinkron RKAS</small></div><div class="lane" style="--d:2.5s"><div class="gridm"></div><div class="barf" style="left:0;right:0;height:3px"></div><div class="mk" style="left:2%"></div></div></div>
+      <div class="cal-r"><div class="nm a left" style="--d:2.7s">Monitoring &amp; Evaluasi<small>bulanan · evaluasi tiap semester</small></div><div class="lane" style="--d:2.8s"><div class="gridm"></div><div id="monev"></div></div></div>
+    </div>
+  </section>
+
+  <!-- penutup -->
+  <section class="scene end" data-theme="ink" data-sec="Penutup" data-dur="10000">
+    <div class="ph"><div class="art"></div><img src="assets/penutup.jpg" alt="" onerror="if(!this.dataset.p){this.dataset.p=1;this.src=this.src.replace(/.jpg$/,'.png')}else this.remove()"></div>
+    <div class="txt">
+      <div class="kick a fade" style="--d:.2s">Penutup</div>
+      <h1 class="disp" style="margin-top:28px"><span class="rv" style="--d:.4s">Data.</span><span class="rv" style="--d:.8s">Aksi.</span><span class="rv last" style="--d:1.2s">Mutu.</span></h1>
+      <p class="bt a up" style="--d:2.2s">Keberhasilan program ditentukan oleh komitmen seluruh warga sekolah, konsistensi pelaksanaan, pemantauan berkelanjutan, dan penggunaan hasil evaluasi sebagai dasar perbaikan.</p>
+    </div>
+    <div class="sig a up" style="--d:3s"><small>Kepala SMP Negeri 3 Besuki</small><div>Drs. Tubias Soegiarto</div></div>
+  </section>
+
+  <div id="wipe"></div>
+  <div class="grain"></div>
+</div>
+
+<div class="ctrl">
+  <button id="bPrev" title="Sebelumnya (←)">◀</button>
+  <button id="bPlay" title="Putar/Jeda (Spasi)">❚❚ Jeda</button>
+  <button id="bNext" title="Berikutnya (→)">▶</button>
+  <button id="bRe" title="Ulang adegan (R)">↺</button>
+  <button id="bFs" title="Layar penuh (F)">⛶ Layar penuh</button>
+  <span class="info">← → pindah · Spasi jeda · F layar penuh</span>
+</div>
+
+<script>
+const IC={
+ users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+ book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg>',
+ calc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15v4M8 19h4"/></svg>',
+ star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>',
+ heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+ home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+ build:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/></svg>',
+ wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16" cy="14" r="1.5"/></svg>'
+};
+const PROG=[
+ {t:"Kombel Spentribes",sub:"Penguatan kompetensi & kualitas pembelajaran",ic:"users",
+  tuj:"Meningkatkan kualitas praktik pembelajaran melalui peningkatan kompetensi guru, pembelajaran aktif, asesmen formatif, dan refleksi.",
+  ans:"Kualitas pembelajaran 60,39 (sedang) dan pelatihan PTK masih kurang — prioritas sangat tinggi.",
+  keg:["IHT/workshop pembelajaran aktif dan kontekstual","MGMP dan berbagi praktik baik","Optimalisasi E-Asesmen Guru dan MAGIS","Supervisi akademik dan umpan balik","Refleksi pembelajaran dan tindak lanjut hasil asesmen"],
+  sas:"Semua guru",wkt:"Juli 2026 – Juni 2027",ind:"100% guru mengikuti pengembangan kompetensi; setiap guru menerapkan dan merefleksikan perbaikan pembelajaran."},
+ {t:"Gemar Literasi",ic:"book",
+  tuj:"Mempertahankan capaian literasi dan meningkatkan kemampuan memahami, mengevaluasi, serta merefleksikan informasi.",
+  ans:"Literasi 97,78% mencapai kompetensi minimum — baik, tetapi menurun.",
+  keg:["Pembiasaan Sigelis (Siswa Gemar Literasi)","Refleksi bacaan"],
+  sas:"Semua peserta didik",wkt:"Mingguan",ind:"Kegiatan literasi berjalan rutin dan hasil asesmen literasi internal meningkat/terjaga."},
+ {t:"Numerasi Kontekstual",ic:"calc",
+  tuj:"Meningkatkan kemampuan menerapkan konsep numerasi dalam masalah nyata.",
+  ans:"Numerasi 95,56% mencapai kompetensi minimum — baik, tetapi menurun, terutama bilangan serta data dan ketidakpastian.",
+  keg:["Pembiasaan Sigma (Siswa Gemar Matematika)","Penerapan numerasi pada berbagai mata pelajaran"],
+  sas:"Semua peserta didik",wkt:"Mingguan",ind:"Kemampuan menyelesaikan masalah numerasi kontekstual meningkat."},
+ {t:"Siswa Disiplin, Kreatif &amp; Aktif",ic:"star",
+  tuj:"Meningkatkan kreativitas, kemandirian, kepemimpinan, dan keterlibatan siswa.",
+  ans:"Kreativitas 52,45 (sedang); partisipasi siswa perlu diperkuat.",
+  keg:["Projek karya siswa melalui kokurikuler berbasis proyek","Pembiasaan tausiah, Yasin, salat berjamaah, dan baris-berbaris","Optimalisasi kegiatan ekstrakurikuler","Pameran/presentasi karya","Pelibatan siswa dalam perencanaan dan evaluasi","Optimalisasi aplikasi Si Diswa"],
+  sas:"Semua peserta didik",wkt:"Juli 2026 – Juni 2027",ind:"Setiap siswa memperoleh pengalaman menghasilkan dan mempresentasikan karya/projek."},
+ {t:"Sekolah Sehat, Aman &amp; Nyaman",ic:"heart",
+  tuj:"Meningkatkan wellbeing (kesejahteraan) dan mempertahankan iklim sekolah yang aman.",
+  ans:"Wellbeing peserta didik 59,72 (sedang); iklim keamanan sudah baik.",
+  keg:["Budaya senyum, sapa, salam setiap hari","Pembiasaan hidup sehat dan menjaga kebersihan","Senam sehat dan aktivitas fisik","Penguatan layanan BK, Si Diswa, dan Mitra Hati"],
+  sas:"Peserta didik dan GTK",wkt:"Rutin",ind:"Wellbeing meningkat dan warga sekolah memahami pentingnya sekolah sehat dan aman."},
+ {t:"Sekolah Bersama Orang Tua",ic:"home",
+  tuj:"Meningkatkan komunikasi dan partisipasi orang tua dalam pendidikan anak.",
+  ans:"Keterlibatan orang tua dan peserta didik perlu diperkuat.",
+  keg:["Forum komunikasi melalui Paguyuban dan Komite Sekolah","Pelibatan orang tua melalui aplikasi Si Diswa","Komunikasi perkembangan belajar siswa"],
+  sas:"Orang tua/wali dan siswa",wkt:"Minimal tiap semester",ind:"Partisipasi orang tua meningkat dan komunikasi sekolah–rumah lebih konsisten."},
+ {t:"Sarana Belajar Layak &amp; Aman",ic:"build",
+  tuj:"Meningkatkan kelayakan ruang dan optimalisasi sarana pembelajaran.",
+  ans:"Kelayakan ruang 44,44 (kurang), meski indeks fasilitas 82,03.",
+  keg:["Inventarisasi kondisi ruang","Penentuan skala prioritas","Perbaikan dan pemeliharaan","Penataan ruang belajar","Optimalisasi TIK, Wi-Fi, perpustakaan, dan laboratorium"],
+  sas:"Seluruh warga sekolah",wkt:"Bertahap",ind:"Ruang prioritas lebih layak dan sarana yang tersedia dimanfaatkan optimal."},
+ {t:"Anggaran Berbasis Prioritas Mutu",ic:"wallet",
+  tuj:"Memastikan sumber daya sekolah mendukung program yang paling berdampak terhadap mutu.",
+  ans:"Keselarasan pembiayaan dengan prioritas mutu — penopang seluruh program.",
+  keg:["Sinkronisasi Rapor Pendidikan dengan RKAS","Prioritas anggaran pengembangan GTK","Dukungan anggaran literasi, numerasi, dan pembelajaran","Anggaran sarana prioritas","Monitoring realisasi program"],
+  sas:"Kepala sekolah & tim manajemen",wkt:"Tahunan",ind:"Program prioritas memperoleh dukungan anggaran dan realisasinya dapat dipantau."}
+];
+const pad=n=>String(n).padStart(2,'0');
+const photo=(src,ic,extra='')=>`<div class="art">${IC[ic]||''}</div><img src="${src}" alt="" onerror="if(!this.dataset.p){this.dataset.p=1;this.src=this.src.replace(/.jpg$/,'.png')}else this.remove()">${extra}`;
+
+/* potret */
+const KUAT=["Literasi &amp; numerasi kategori baik","Karakter peserta didik baik","Fasilitas TIK &amp; sanitasi mendukung","Kepemimpinan instruksional baik","Iklim keamanan baik"];
+const LEMAH=["Kualitas pembelajaran","Kompetensi guru","Literasi &amp; numerasi menurun","Kreativitas peserta didik","Wellbeing","Partisipasi warga sekolah","Kelayakan ruang","Kesiapsiagaan bencana"];
+itG.innerHTML=KUAT.map((t,i)=>`<div class="it a left" style="--d:${1.2+i*.22}s"><i>${pad(i+1)}</i>${t}</div>`).join('');
+itW.innerHTML=LEMAH.map((t,i)=>`<div class="it a left" style="--d:${2.9+i*.2}s"><i>${pad(i+1)}</i>${t}</div>`).join('');
+
+/* angka */
+const G=[
+ ["Kualitas pembelajaran",60.39,"","Sedang","var(--ochre)",1],
+ ["Literasi",97.78,"%","Baik","var(--green)",1],
+ ["Numerasi",95.56,"%","Baik","var(--green)",1],
+ ["Kreativitas peserta didik",52.45,"","Sedang","var(--ochre)",0],
+ ["Wellbeing peserta didik",59.72,"","Sedang","var(--ochre)",0],
+ ["Kelayakan ruang",44.44,"","Kurang","var(--redc)",0]];
+bars.innerHTML=G.map((g,i)=>{const d=.7+i*.35;return `<div class="br-row a up" style="--d:${d}s;--c:${g[4]}">
+ <div class="lbl">${g[0]}</div>
+ <div class="track"><div class="ticks"></div><div class="fill" style="--w:${g[1]}%;--d:${d+.3}s"></div></div>
+ <div class="val"><span data-count="${g[1]}" data-delay="${(d+.3)*1000}" data-suf="${g[2]}">0</span></div>
+ <div class="st"><span class="k">● ${g[3]}</span>${g[5]?'<span class="dn">▼ Menurun</span>':''}</div></div>`}).join('');
+
+/* peta */
+const M=[["Kualitas pembelajaran","60,39 · sedang, menurun",3,0],["Kompetensi guru","pelatihan PTK masih kurang",3,0],["Literasi","97,78% · baik, menurun",2,1],["Numerasi","95,56% · baik, menurun",2,2],
+ ["Wellbeing &amp; keamanan","wellbeing perlu diperkuat",2,4],["Partisipasi","orang tua &amp; peserta didik",2,5],["Karakter &amp; kreativitas","kreativitas 52,45 · sedang",1,3],["Sarana","kelayakan ruang 44,44 · kurang",1,6]];
+const LV={3:"Sangat tinggi",2:"Tinggi",1:"Sedang"};
+map.innerHTML=M.map((m,i)=>{const d=.9+i*.4;return `<div class="mrow">
+ <span class="no a fade" style="--d:${d}s">${pad(i+1)}</span>
+ <div class="ms a left" style="--d:${d}s">${m[0]}<small>${m[1]}</small></div>
+ <div class="lvl a fade" style="--d:${d+.15}s">${[1,2,3].map(k=>`<i class="${k<=m[2]?'f':''}"></i>`).join('')}<span>${LV[m[2]]}</span></div>
+ <div class="pg a left" style="--d:${d+.3}s">${PROG[m[3]].t}</div></div>`}).join('');
+
+/* ikhtisar */
+eight.innerHTML=PROG.map((p,i)=>`<div class="card">
+ <div class="ph reveal" style="--d:${.6+i*.18}s">${photo(`assets/p${i+1}.jpg`,p.ic)}</div>
+ <div class="meta a up" style="--d:${.9+i*.18}s"><span class="no">${pad(i+1)}</span><h4>${p.t}</h4></div></div>`).join('');
+
+/* adegan program */
+progSlot.outerHTML=PROG.map((p,i)=>{
+ const two=p.keg.length>4, b=1.7, step=two?.3:.4, end=b+p.keg.length*step;
+ const dur=Math.round(9000+p.keg.length*700);
+ return `<section class="scene" data-sec="Program ${pad(i+1)} / 08" data-dur="${dur}">
+ <div class="pgs">
+  <div class="ph reveal" style="--d:.1s">${photo(`assets/p${i+1}.jpg`,p.ic,`<div class="cnt">Program ${pad(i+1)} — dari 08</div><div class="big">${pad(i+1)}</div>`)}</div>
+  <div class="pr">
+   <div class="kick a fade" style="--d:.5s">Program ${pad(i+1)}</div>
+   <h2 class="disp"><span class="rv" style="--d:.6s">${p.t}</span></h2>
+   ${p.sub?`<div class="sb a fade" style="--d:.9s">${p.sub}</div>`:''}
+   <p class="tj a up" style="--d:1s">${p.tuj}</p>
+   <div class="ans a left" style="--d:1.3s"><small>Menjawab temuan rapor</small>${p.ans}</div>
+   <div class="keg-h a fade" style="--d:${b}s">Kegiatan utama</div>
+   <ul class="keg ${two?'two':''}">${p.keg.map((k,j)=>`<li class="a up" style="--d:${b+.2+j*step}s"><i>${pad(j+1)}</i>${k}</li>`).join('')}</ul>
+   <div class="pmeta">
+    <div class="a up" style="--d:${end+.4}s"><small>Sasaran</small><span>${p.sas}</span></div>
+    <div class="a up" style="--d:${end+.6}s"><small>Waktu</small><span>${p.wkt}</span></div>
+    <div class="ind a up" style="--d:${end+.8}s"><small>Indikator keberhasilan</small><span>${p.ind}</span></div>
+   </div>
+  </div>
+ </div></section>`}).join('');
+
+/* monev: garis tiap bulan + belah ketupat evaluasi semester */
+monev.innerHTML=Array.from({length:12},(_,k)=>`<div class="mk2" style="left:${(k+.5)/12*100}%"></div>`).join('')+
+ `<div class="mk" style="left:${5.5/12*100}%"></div><div class="mk" style="left:${11.5/12*100}%"></div>`;
+
+/* bungkus .rv agar teks muncul dari balik garis */
+document.querySelectorAll('.rv').forEach(el=>{el.innerHTML=`<span class="i">${el.innerHTML}</span>`;});
+
+/* mesin pemutar */
+const stage=document.getElementById('stage');
+const scenes=[...document.querySelectorAll('.scene')];
+const N=scenes.length, wipe=document.getElementById('wipe');
+let cur=0, playing=true, t0=0, elapsed=0, timers=[], swapT;
+function counters(sc){
+ timers.forEach(clearTimeout);timers=[];
+ sc.querySelectorAll('[data-count]').forEach(el=>{
+  const v=+el.dataset.count,suf=el.dataset.suf||'';el.textContent='0'+suf;
+  timers.push(setTimeout(()=>{const s=performance.now();
+   (function step(n){const k=Math.min(1,(n-s)/1800),e=1-Math.pow(1-k,3);
+    el.textContent=(v*e).toFixed(2).replace('.',',')+suf;if(k<1)requestAnimationFrame(step);})(s);},+el.dataset.delay||0));
+ });
+}
+function show(i){
+ scenes.forEach(s=>s.classList.remove('on'));void stage.offsetWidth;
+ const s=scenes[i];s.classList.add('on');
+ stage.dataset.theme=s.dataset.theme||'paper';
+ secLabel.textContent=s.dataset.sec||'';pageNo.textContent=`${pad(i+1)} / ${pad(N)}`;
+ counters(s);
+}
+function go(i,instant){
+ i=Math.max(0,Math.min(N-1,i));cur=i;elapsed=0;t0=performance.now();
+ clearTimeout(swapT);
+ if(instant){show(i);return;}
+ wipe.classList.remove('run');void wipe.offsetWidth;wipe.classList.add('run');
+ swapT=setTimeout(()=>{show(i);t0=performance.now();},420);
+}
+const total=scenes.reduce((a,s)=>a+ +s.dataset.dur,0);
+function tick(n){
+ if(playing){elapsed=n-t0;
+  if(elapsed>=+scenes[cur].dataset.dur){ if(cur<N-1) go(cur+1); else {playing=false;setBtn();} }
+ } else t0=n-elapsed;
+ const done=scenes.slice(0,cur).reduce((a,s)=>a+ +s.dataset.dur,0)+Math.min(Math.max(elapsed,0),+scenes[cur].dataset.dur);
+ pbar.style.width=(done/total*1776)+'px';
+ requestAnimationFrame(tick);
+}
+function setBtn(){bPlay.textContent=playing?'❚❚ Jeda':'▶ Putar';}
+function toggle(){if(!playing&&cur===N-1){go(0);} playing=!playing;setBtn();}
+function fs(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{});}
+bPrev.onclick=()=>go(cur-1);bNext.onclick=()=>go(cur+1);bRe.onclick=()=>go(cur,true);bFs.onclick=fs;bPlay.onclick=toggle;
+addEventListener('keydown',e=>{
+ if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);
+ else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+ else if(e.key===' '){e.preventDefault();toggle();}
+ else if(e.key==='f'||e.key==='F')fs();
+ else if(e.key==='r'||e.key==='R')go(cur,true);
+ else if(e.key==='Home')go(0);
+});
+let hideT;addEventListener('mousemove',()=>{document.body.classList.add('show');clearTimeout(hideT);hideT=setTimeout(()=>document.body.classList.remove('show'),2200)});
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(-50%,-50%) scale(${s})`;}
+addEventListener('resize',fit);fit();
+go(0,true);requestAnimationFrame(tick);
+</script>
+</body>
+</html>
